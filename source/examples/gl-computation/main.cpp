@@ -1,24 +1,74 @@
 
 #include <iostream>
 
-#include <baselib/baselib.h>
+#include <GLFW/glfw3.h>
 
-#include <fiblib/CTFibonacci.h>
-#include <fiblib/Fibonacci.h>
+#include <glbinding/ContextInfo.h>
+#include <glbinding/Version.h>
+#include <glbinding/callbacks.h>
+#include <glbinding/Binding.h>
+
+#include <glbinding/gl/gl.h>
 
 
-int main(int /*argc*/, char* /*argv*/[])
+void error(int errnum, const char * errmsg)
 {
-    // Print library info
-    baselib::printInfo();
-    std::cout << std::endl;
+    std::cerr << errnum << ": " << errmsg << std::endl;
+}
 
-    // Calculate and print fibonacci number
-    std::cout << "Fibonacci library" << std::endl;
-    std::cout << "========================================" << std::endl;
-    std::cout << "CTFibonacci(6) = " << fiblib::CTFibonacci<6>::value << std::endl;
-    std::cout << "Fibonacci(8)   = " << fiblib::Fibonacci()(8) << std::endl;
-    std::cout << std::endl;
 
+int main(int, char *[])
+{
+    if (!glfwInit())
+        return 1;
+
+    glfwSetErrorCallback(error);
+
+    glfwDefaultWindowHints();
+
+#ifdef SYSTEM_DARWIN
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#endif
+
+    glfwWindowHint(GLFW_VISIBLE, false);
+    
+    GLFWwindow * window = glfwCreateWindow(640, 480, "", nullptr, nullptr);
+    if (!window)
+    {
+        glfwTerminate();
+        return -1;
+    }
+
+    glfwMakeContextCurrent(window);
+
+    setAfterCallback([](const FunctionCall &) 
+    {
+        gl::GLenum error = glGetError();
+        if (error != GL_NO_ERROR)
+            std::cout << "error: " << error << std::endl;
+    });
+
+    Binding::initialize(false); // only resolve functions that are actually used (lazy)
+
+    // print some gl infos (query)
+
+    std::cout << std::endl
+        << "OpenGL Version:  " << ContextInfo::version() << std::endl
+        << "OpenGL Vendor:   " << ContextInfo::vendor() << std::endl
+        << "OpenGL Renderer: " << ContextInfo::renderer() << std::endl;
+
+    while (!glfwWindowShouldClose(window))
+    {
+        glfwPollEvents();
+        
+        // draw
+        
+        glfwSwapBuffers(window);
+    }
+
+    glfwTerminate();
     return 0;
 }
