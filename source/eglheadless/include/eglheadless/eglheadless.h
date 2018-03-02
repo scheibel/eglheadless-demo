@@ -23,6 +23,8 @@ public:
     void setChannelDepths(EGLint redBits, EGLint greenBits, EGLint bluebits, EGLint depthBits);
     void enableRenderingAPIs(EGLint renderingAPIs);
 
+    EGLSurface createPixelBuffer() const;
+
 
 protected:
     EGLint m_width;
@@ -38,31 +40,38 @@ protected:
 class EGLHEADLESS_API PixelBuffer
 {
 public:
-    PixelBuffer();
+    PixelBuffer(const PixelBufferInfo & info, EGLSurface surfaceId);
     ~PixelBuffer();
 
 
+public:
+    EGLSurface surfaceId() const;
+
+
 protected:
-    PixelBufferInfo * m_info;
-    EGLint m_surfaceId;
+    const PixelBufferInfo & m_info;
+    EGLSurface m_surfaceId;
 };
 
 
-class EGLHEADLESS_API Context
+/*class EGLHEADLESS_API Context
 {
 public:
     Context();
     ~Context();
 
 
+public:
+    void makeCurrent(const PixelBuffer & readBuffer, const PixelBuffer & drawBuffer, EGLint renderingAPI);
+
+
 protected:
-    PixelBuffer * m_buffer;
-};
+};*/
 
 
-void initialize();
-void deinitialize();
-PixelBuffer createPixelBuffer(const PixelBufferInfo & info);
+void EGLHEADLESS_API initialize();
+void EGLHEADLESS_API deinitialize();
+PixelBuffer EGLHEADLESS_API createPixelBuffer(const PixelBufferInfo & info);
 
 
 } // namespace eglheadless

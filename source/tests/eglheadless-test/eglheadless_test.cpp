@@ -10,7 +10,7 @@ public:
 };
 
 
-TEST_F(eglheadless_test, Check)
+TEST_F(eglheadless_test, NativeCheck)
 {
     static const EGLint configAttribs[] = {
         EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
@@ -22,12 +22,9 @@ TEST_F(eglheadless_test, Check)
         EGL_NONE
     };
 
-    static const int pbufferWidth = 9;
-    static const int pbufferHeight = 9;
-
     static const EGLint pbufferAttribs[] = {
-        EGL_WIDTH, pbufferWidth,
-        EGL_HEIGHT, pbufferHeight,
+        EGL_WIDTH, 1920,
+        EGL_HEIGHT, 1080,
         EGL_NONE,
     };
 
@@ -50,4 +47,20 @@ TEST_F(eglheadless_test, Check)
     ASSERT_NE(nullptr, eglSurf);
 
     eglTerminate(eglDpy);
+}
+
+TEST_F(eglheadless_test, AbstractionCheck)
+{
+    eglheadless::initialize();
+
+    eglheadless::PixelBufferInfo pBufferInfo;
+    pBufferInfo.setSize(1920, 1080);
+    pBufferInfo.setChannelDepths(8, 8, 8, 8);
+    pBufferInfo.enableRenderingAPIs(EGL_OPENGL_BIT);
+
+    eglheadless::PixelBuffer pixelBuffer = eglheadless::createPixelBuffer(pBufferInfo);
+
+    ASSERT_NE(nullptr, pixelBuffer.surfaceId());
+
+    eglheadless::deinitialize();
 }
