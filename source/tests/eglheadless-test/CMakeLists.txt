@@ -5,6 +5,9 @@
 
 find_package(${META_PROJECT_NAME} REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../../")
 
+find_package(glbinding REQUIRED)
+find_package(GLESv2 REQUIRED)
+
 # 
 # Executable name and options
 # 
@@ -67,6 +70,8 @@ target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
     ${META_PROJECT_NAME}::eglheadless
+    glbinding::glbinding
+    GLESv2::GLESv2
     gmock-dev
 )
 

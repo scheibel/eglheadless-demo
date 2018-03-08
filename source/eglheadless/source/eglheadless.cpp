@@ -28,6 +28,11 @@ void deinitialize()
     eglTerminate(eglDisplay);
 }
 
+EGLDisplay defaultDisplay()
+{
+    return eglDisplay;
+}
+
 PixelBuffer createPixelBuffer(const PixelBufferInfo & info)
 {
     return PixelBuffer(info, info.createPixelBuffer());

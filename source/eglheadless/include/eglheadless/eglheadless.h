@@ -71,6 +71,7 @@ protected:
 
 void EGLHEADLESS_API initialize();
 void EGLHEADLESS_API deinitialize();
+EGLDisplay EGLHEADLESS_API defaultDisplay();
 PixelBuffer EGLHEADLESS_API createPixelBuffer(const PixelBufferInfo & info);
 
 
