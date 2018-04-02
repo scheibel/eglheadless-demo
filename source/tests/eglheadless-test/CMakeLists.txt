@@ -71,6 +71,7 @@ target_link_libraries(${target}
     ${DEFAULT_LIBRARIES}
     ${META_PROJECT_NAME}::eglheadless
     glbinding::glbinding
+    glbinding::glbinding-aux
     GLESv2::GLESv2
     gmock-dev
 )
