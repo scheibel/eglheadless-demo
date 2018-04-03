@@ -3,8 +3,6 @@
 # External dependencies
 # 
 
-find_package(${META_PROJECT_NAME} REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../../")
-
 find_package(glbinding REQUIRED)
 find_package(GLESv2 REQUIRED)
 
@@ -13,8 +11,8 @@ find_package(GLESv2 REQUIRED)
 # 
 
 # Target name
-set(target eglheadless-test)
-message(STATUS "Test ${target}")
+set(target featurecheck)
+message(STATUS "Tool ${target}")
 
 
 # 
@@ -22,8 +20,7 @@ message(STATUS "Test ${target}")
 # 
 
 set(sources
-    main.cpp
-    eglheadless_test.cpp
+    featurecheck.cpp
 )
 
 
@@ -73,7 +70,6 @@ target_link_libraries(${target}
     glbinding::glbinding
     glbinding::glbinding-aux
     GLESv2::GLESv2
-    gmock-dev
 )
 
 
@@ -104,4 +100,25 @@ target_compile_options(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LINKER_OPTIONS}
+)
+
+
+#
+# Target Health
+#
+
+perform_health_checks(
+    ${target}
+    ${sources}
+)
+
+
+# 
+# Deployment
+# 
+
+# Executable
+install(TARGETS ${target}
+    RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT tools
+    BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT tools
 )

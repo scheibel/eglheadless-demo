@@ -19,6 +19,12 @@ add_subdirectory(eglheadless)
 set(IDE_FOLDER "Examples")
 add_subdirectory(examples)
 
+# Tools
+if(OPTION_BUILD_TOOLS)
+    set(IDE_FOLDER "Tools")
+    add_subdirectory(tools)
+endif()
+
 # Tests
 if(OPTION_BUILD_TESTS)
     set(IDE_FOLDER "Tests")

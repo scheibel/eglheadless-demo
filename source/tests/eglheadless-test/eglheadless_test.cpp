@@ -3,13 +3,24 @@
 
 #include <fstream>
 
-#include <glbinding/Binding.h>
-#include <glbinding/callbacks.h>
-#include <glbinding/ContextInfo.h>
+#include <glbinding/glbinding.h>
 #include <glbinding/Version.h>
 #include <glbinding/gl32/gl.h>
 
+#include <glbinding-aux/ContextInfo.h>
+#include <glbinding-aux/types_to_string.h>
+
 #include <eglheadless/eglheadless.h>
+
+
+namespace
+{
+
+
+const auto useOpenGL = false;
+
+
+}
 
 
 class eglheadless_test: public testing::Test
@@ -63,7 +74,7 @@ TEST_F(eglheadless_test, NativeCheck)
     std::clog << "Extensions: " << eglQueryString(eglDpy, EGL_EXTENSIONS) << std::endl;
     std::clog << "Vendor: " << eglQueryString(eglDpy, EGL_VENDOR) << std::endl;
     std::clog << "Version: " << eglQueryString(eglDpy, EGL_VERSION) << std::endl;
-
+    
     // 2. Select an appropriate configuration
     EGLint numConfigs;
     std::array<EGLConfig, 128> eglCfgs;
@@ -84,17 +95,29 @@ TEST_F(eglheadless_test, NativeCheck)
 
     ASSERT_NE(nullptr, eglSurf);
 
+    if (useOpenGL)
+    {
+        eglBindAPI(EGL_OPENGL_API);
+    }
+    else
+    {
+        eglBindAPI(EGL_OPENGL_ES_API);
+    }
+
     static const EGLint ctxattr[] = {
-//            EGL_CONTEXT_CLIENT_TYPE, EGL_OPENGL_ES2_BIT,
-            EGL_CONTEXT_MAJOR_VERSION, 3,
-            EGL_CONTEXT_MINOR_VERSION, 1,
-            EGL_NONE
+        EGL_CONTEXT_MAJOR_VERSION, 3,
+        EGL_CONTEXT_MINOR_VERSION, 2,
+        EGL_NONE,
+        EGL_CONTEXT_CLIENT_VERSION, 3,
+        EGL_NONE
     };
 
-    auto openGLContext = eglCreateContext(eglDpy, eglCfgs[0], 0, ctxattr);
+    //auto openGLContext = eglCreateContext(eglDpy, nullptr, 0, ctxattr + (useOpenGL ? 0 : 5));
+    auto openGLContext = eglCreateContext(eglDpy, eglCfgs[0], 0, ctxattr + (useOpenGL ? 0 : 5));
 
     ASSERT_NE(nullptr, openGLContext);
 
+    //eglMakeCurrent(eglDpy, nullptr, nullptr, openGLContext);
     eglMakeCurrent(eglDpy, eglSurf, eglSurf, openGLContext);
 
     glbinding::setAfterCallback([](const glbinding::FunctionCall &)
@@ -104,28 +127,28 @@ TEST_F(eglheadless_test, NativeCheck)
             std::cout << "error: " << error << std::endl;
     });
 
-    glbinding::Binding::initialize();
+    glbinding::initialize(eglGetProcAddress);
 
     glbinding::setCallbackMaskExcept(glbinding::CallbackMask::After, { "glGetError" });
 
     std::cout << std::endl
             << "OpenGL Version:  " << gl::glGetString(gl::GL_VERSION) << std::endl
-            << "OpenGL Vendor:   " << glbinding::ContextInfo::vendor() << std::endl
-            << "OpenGL Renderer: " << glbinding::ContextInfo::renderer() << std::endl;
+            << "OpenGL Vendor:   " << glbinding::aux::ContextInfo::vendor() << std::endl
+            << "OpenGL Renderer: " << glbinding::aux::ContextInfo::renderer() << std::endl;
 
     gl::GLuint fbo;
     gl::GLuint colorBuffer;
 
-    //gl::glGenFramebuffers(1, &fbo);
-    //gl::glGenRenderbuffers(1, &colorBuffer);
+    gl::glGenFramebuffers(1, &fbo);
+    gl::glGenRenderbuffers(1, &colorBuffer);
 
-    //gl::glBindFramebuffer(gl::GL_FRAMEBUFFER, fbo);
-    //gl::glBindRenderbuffer(gl::GL_RENDERBUFFER, colorBuffer);
+    gl::glBindFramebuffer(gl::GL_FRAMEBUFFER, fbo);
+    gl::glBindRenderbuffer(gl::GL_RENDERBUFFER, colorBuffer);
 
-    //gl::glRenderbufferStorage(gl::GL_RENDERBUFFER, gl::GL_RGB8, 1920, 1080);
-    //gl::glFramebufferRenderbuffer(gl::GL_FRAMEBUFFER, gl::GL_COLOR_ATTACHMENT0, gl::GL_RENDERBUFFER, colorBuffer);
+    gl::glRenderbufferStorage(gl::GL_RENDERBUFFER, gl::GL_RGB8, 1920, 1080);
+    gl::glFramebufferRenderbuffer(gl::GL_FRAMEBUFFER, gl::GL_COLOR_ATTACHMENT0, gl::GL_RENDERBUFFER, colorBuffer);
 
-    //gl::glDrawBuffers(1, &gl::GL_COLOR_ATTACHMENT0);
+    gl::glDrawBuffers(1, &gl::GL_COLOR_ATTACHMENT0);
 
     gl::glViewport(0, 0, 1920, 1080);
     gl::glClearColor(1.0f, 0.5f, 0.25f, 1.0f);
@@ -135,7 +158,7 @@ TEST_F(eglheadless_test, NativeCheck)
 
     std::vector<gl::GLubyte> pixels(1920 * 1080 * 4 * sizeof(gl::GLubyte));
 
-    //gl::glReadBuffer(gl::GL_COLOR_ATTACHMENT0);
+    gl::glReadBuffer(gl::GL_COLOR_ATTACHMENT0);
 
     gl::glReadPixels(0, 0, 1920, 1080, gl::GL_RGBA, gl::GL_UNSIGNED_BYTE, pixels.data());
 
@@ -146,8 +169,8 @@ TEST_F(eglheadless_test, NativeCheck)
 
     stream.close();
 
-    //gl::glDeleteRenderbuffers(1, &colorBuffer);
-    //gl::glDeleteFramebuffers(1, &fbo);
+    gl::glDeleteRenderbuffers(1, &colorBuffer);
+    gl::glDeleteFramebuffers(1, &fbo);
 
     eglMakeCurrent(eglDpy, nullptr, nullptr, nullptr);
 
