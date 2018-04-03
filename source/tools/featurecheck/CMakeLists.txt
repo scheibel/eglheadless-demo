@@ -3,8 +3,9 @@
 # External dependencies
 # 
 
+find_package(EGL REQUIRED)
+find_package(eglbinding REQUIRED)
 find_package(glbinding REQUIRED)
-find_package(GLESv2 REQUIRED)
 
 # 
 # Executable name and options
@@ -21,6 +22,8 @@ message(STATUS "Tool ${target}")
 
 set(sources
     featurecheck.cpp
+    getProcAddress.cpp
+    getProcAddress.h
 )
 
 
@@ -66,10 +69,11 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
-    ${META_PROJECT_NAME}::eglheadless
+    EGL::EGL
+    eglbinding::eglbinding
+    eglbinding::eglbinding-aux
     glbinding::glbinding
     glbinding::glbinding-aux
-    GLESv2::GLESv2
 )
 
 

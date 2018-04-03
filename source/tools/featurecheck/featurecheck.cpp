@@ -2,6 +2,10 @@
 #include <iostream>
 #include <cstring>
 
+#include <eglbinding/eglbinding.h>
+#include <eglbinding/Version.h>
+#include <eglbinding/egl/egl.h>
+
 #include <glbinding/glbinding.h>
 #include <glbinding/Version.h>
 #include <glbinding/gl32/gl.h>
@@ -9,17 +13,11 @@
 #include <glbinding-aux/ContextInfo.h>
 #include <glbinding-aux/types_to_string.h>
 
-#include <eglheadless/eglheadless.h>
+#include "getProcAddress.h"
 
 
-namespace
-{
+using namespace egl;
 
-
-EGLDisplay eglDpy = nullptr;
-
-
-}
 
 bool testRendering()
 {
@@ -30,7 +28,9 @@ bool testRendering()
             std::cout << "error: " << error << std::endl;
     });
 
-    glbinding::initialize(eglGetProcAddress);
+    glbinding::initialize([](const char * name) {
+        return eglGetProcAddress(name);
+    });
 
     glbinding::setCallbackMaskExcept(glbinding::CallbackMask::After, { "glGetError" });
 
@@ -70,27 +70,27 @@ bool testRendering()
     return pixels[0] == 0xFF && (pixels[1] == 0x7F || pixels[1] == 0x80) && pixels[2] == 0x40 && pixels[3] == 0xFF;
 }
 
-bool testPBufferOpenGL4()
+bool testPBufferOpenGL4(EGLDisplay eglDpy)
 {
     static const EGLint configAttribs[] = {
-        EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-        EGL_BLUE_SIZE, 8,
-        EGL_GREEN_SIZE, 8,
-        EGL_RED_SIZE, 8,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-        EGL_NONE
+        static_cast<EGLint>(EGL_SURFACE_TYPE), static_cast<EGLint>(EGL_PBUFFER_BIT),
+        static_cast<EGLint>(EGL_BLUE_SIZE), 8,
+        static_cast<EGLint>(EGL_GREEN_SIZE), 8,
+        static_cast<EGLint>(EGL_RED_SIZE), 8,
+        static_cast<EGLint>(EGL_RENDERABLE_TYPE), static_cast<EGLint>(EGL_OPENGL_BIT),
+        static_cast<EGLint>(EGL_NONE)
     };
 
     static const EGLint pbufferAttribs[] = {
-        EGL_WIDTH, 1,
-        EGL_HEIGHT, 1,
-        EGL_NONE
+        static_cast<EGLint>(EGL_WIDTH), 1,
+        static_cast<EGLint>(EGL_HEIGHT), 1,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     static const EGLint ctxattr[] = {
-        EGL_CONTEXT_MAJOR_VERSION, 4,
-        EGL_CONTEXT_MINOR_VERSION, 1,
-        EGL_NONE
+        static_cast<EGLint>(EGL_CONTEXT_MAJOR_VERSION), 4,
+        static_cast<EGLint>(EGL_CONTEXT_MINOR_VERSION), 1,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     eglBindAPI(EGL_OPENGL_API);
@@ -118,26 +118,26 @@ bool testPBufferOpenGL4()
     return result;
 }
 
-bool testPBufferOpenGLES3()
+bool testPBufferOpenGLES3(EGLDisplay eglDpy)
 {
     static const EGLint ctxattr[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 3,
-        EGL_NONE
+        static_cast<EGLint>(EGL_CONTEXT_CLIENT_VERSION), 3,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     static const EGLint configAttribs[] = {
-        EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-        EGL_BLUE_SIZE, 8,
-        EGL_GREEN_SIZE, 8,
-        EGL_RED_SIZE, 8,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-        EGL_NONE
+        static_cast<EGLint>(EGL_SURFACE_TYPE), static_cast<EGLint>(EGL_PBUFFER_BIT),
+        static_cast<EGLint>(EGL_BLUE_SIZE), 8,
+        static_cast<EGLint>(EGL_GREEN_SIZE), 8,
+        static_cast<EGLint>(EGL_RED_SIZE), 8,
+        static_cast<EGLint>(EGL_RENDERABLE_TYPE), static_cast<EGLint>(EGL_OPENGL_ES3_BIT),
+        static_cast<EGLint>(EGL_NONE)
     };
 
     static const EGLint pbufferAttribs[] = {
-        EGL_WIDTH, 1,
-        EGL_HEIGHT, 1,
-        EGL_NONE
+        static_cast<EGLint>(EGL_WIDTH), 1,
+        static_cast<EGLint>(EGL_HEIGHT), 1,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     eglBindAPI(EGL_OPENGL_ES_API);
@@ -165,26 +165,26 @@ bool testPBufferOpenGLES3()
     return result;
 }
 
-bool testPBufferOpenGLES2()
+bool testPBufferOpenGLES2(EGLDisplay eglDpy)
 {
     static const EGLint ctxattr[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_NONE
+        static_cast<EGLint>(EGL_CONTEXT_CLIENT_VERSION), 2,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     static const EGLint configAttribs[] = {
-        EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-        EGL_BLUE_SIZE, 8,
-        EGL_GREEN_SIZE, 8,
-        EGL_RED_SIZE, 8,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-        EGL_NONE
+        static_cast<EGLint>(EGL_SURFACE_TYPE), static_cast<EGLint>(EGL_PBUFFER_BIT),
+        static_cast<EGLint>(EGL_BLUE_SIZE), 8,
+        static_cast<EGLint>(EGL_GREEN_SIZE), 8,
+        static_cast<EGLint>(EGL_RED_SIZE), 8,
+        static_cast<EGLint>(EGL_RENDERABLE_TYPE), static_cast<EGLint>(EGL_OPENGL_ES3_BIT),
+        static_cast<EGLint>(EGL_NONE)
     };
 
     static const EGLint pbufferAttribs[] = {
-        EGL_WIDTH, 1,
-        EGL_HEIGHT, 1,
-        EGL_NONE
+        static_cast<EGLint>(EGL_WIDTH), 1,
+        static_cast<EGLint>(EGL_HEIGHT), 1,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     eglBindAPI(EGL_OPENGL_ES_API);
@@ -212,45 +212,12 @@ bool testPBufferOpenGLES2()
     return result;
 }
 
-bool testNativeSurfaceOpenGL4()
+bool testSurfacelessOpenGL4(EGLDisplay eglDpy)
 {
     static const EGLint ctxattr[] = {
-        EGL_CONTEXT_MAJOR_VERSION, 4,
-        EGL_CONTEXT_MINOR_VERSION, 1,
-        EGL_NONE
-    };
-
-    eglBindAPI(EGL_OPENGL_API);
-
-    const auto result = testRendering();
-
-    return result;
-}
-
-bool testNativeSurfaceOpenGLES3()
-{
-    eglBindAPI(EGL_OPENGL_ES_API);
-
-    const auto result = testRendering();
-
-    return result;
-}
-
-bool testNativeSurfaceOpenGLES2()
-{
-    eglBindAPI(EGL_OPENGL_ES_API);
-
-    const auto result = testRendering();
-
-    return result;
-}
-
-bool testSurfacelessOpenGL4()
-{
-    static const EGLint ctxattr[] = {
-        EGL_CONTEXT_MAJOR_VERSION, 4,
-        EGL_CONTEXT_MINOR_VERSION, 1,
-        EGL_NONE
+        static_cast<EGLint>(EGL_CONTEXT_MAJOR_VERSION), 4,
+        static_cast<EGLint>(EGL_CONTEXT_MINOR_VERSION), 1,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     eglBindAPI(EGL_OPENGL_API);
@@ -266,11 +233,11 @@ bool testSurfacelessOpenGL4()
     return result;
 }
 
-bool testSurfacelessOpenGLES3()
+bool testSurfacelessOpenGLES3(EGLDisplay eglDpy)
 {
     static const EGLint ctxattr[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 3,
-        EGL_NONE
+        static_cast<EGLint>(EGL_CONTEXT_CLIENT_VERSION), 3,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     eglBindAPI(EGL_OPENGL_ES_API);
@@ -286,11 +253,11 @@ bool testSurfacelessOpenGLES3()
     return result;
 }
 
-bool testSurfacelessOpenGLES2()
+bool testSurfacelessOpenGLES2(EGLDisplay eglDpy)
 {
     static const EGLint ctxattr[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_NONE
+        static_cast<EGLint>(EGL_CONTEXT_CLIENT_VERSION), 2,
+        static_cast<EGLint>(EGL_NONE)
     };
 
     eglBindAPI(EGL_OPENGL_ES_API);
@@ -308,12 +275,14 @@ bool testSurfacelessOpenGLES2()
 
 void printResult(const std::string & testName, const bool result)
 {
-    std::clog << testName << " - " << (result ? "Success" : "Failure") << std::endl;
+    std::clog << testName << " - " << (result ? "SUCCEED" : "FAILED") << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
-    eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    eglbinding::initialize(getProcAddress);
+
+    const auto eglDpy = eglGetDisplay(0); // EGL_DEFAULT_DISPLAY
 
     if (eglDpy == nullptr)
     {
@@ -337,30 +306,55 @@ int main(int argc, char* argv[])
         std::clog << "Initialize EGL " << vmajor << "." << vminor << std::endl;
     }
 
-    const auto apiString = eglQueryString(eglDpy, EGL_CLIENT_APIS);
+    const auto apiString = eglQueryString(eglDpy, static_cast<EGLint>(EGL_CLIENT_APIS));
     std::clog << "APIs: " << (strlen(apiString) > 0 ? apiString : "unspecified") << std::endl;
-    std::clog << "Extensions: " << eglQueryString(eglDpy, EGL_EXTENSIONS) << std::endl;
-    std::clog << "Vendor: " << eglQueryString(eglDpy, EGL_VENDOR) << std::endl;
-    std::clog << "Version: " << eglQueryString(eglDpy, EGL_VERSION) << std::endl;
+    std::clog << "Extensions: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_EXTENSIONS)) << std::endl;
+    std::clog << "Vendor: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_VENDOR)) << std::endl;
+    std::clog << "Version: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_VERSION)) << std::endl;
 
-    std::clog << std::endl << "Test EGL context creation configurations" << std::endl;
+    std::clog << std::endl << "Test Native Display" << std::endl;
 
     std::clog << std::endl << "PBuffers as surface" << std::endl;
-    printResult("OpenGL 4   ", testPBufferOpenGL4());
-    printResult("OpenGL ES 2", testPBufferOpenGLES2());
-    printResult("OpenGL ES 3", testPBufferOpenGLES3());
-
-    /*
-    std::clog << std::endl << "GPU-created surface" << std::endl;
-    printResult("OpenGL 4   ", testNativeSurfaceOpenGL4());
-    printResult("OpenGL ES 2", testNativeSurfaceOpenGLES2());
-    printResult("OpenGL ES 3", testNativeSurfaceOpenGLES3());
-    */
+    printResult("OpenGL 4   ", testPBufferOpenGL4(eglDpy));
+    printResult("OpenGL ES 2", testPBufferOpenGLES2(eglDpy));
+    printResult("OpenGL ES 3", testPBufferOpenGLES3(eglDpy));
 
     std::clog << std::endl << "No surface" << std::endl;
-    printResult("OpenGL 4   ", testSurfacelessOpenGL4());
-    printResult("OpenGL ES 2", testSurfacelessOpenGLES2());
-    printResult("OpenGL ES 3", testSurfacelessOpenGLES3());
+    printResult("OpenGL 4   ", testSurfacelessOpenGL4(eglDpy));
+    printResult("OpenGL ES 2", testSurfacelessOpenGLES2(eglDpy));
+    printResult("OpenGL ES 3", testSurfacelessOpenGLES3(eglDpy));
+
+    std::array<EGLDeviceEXT, 255> devices;
+
+    EGLint numDevices = 0;
+
+    if (eglQueryDevicesEXT(255, devices.data(), &numDevices))
+    {
+        for (auto i = 0; i < numDevices; ++i)
+        {
+            const auto & device = devices[i];
+
+            const auto deviceDisplay = eglGetPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, device, nullptr);
+
+            std::clog << std::endl << "Test GPU Display " << (i+1) << std::endl;
+
+            if (deviceDisplay == nullptr) // EGL_NO_DISPLAY
+            {
+                std::clog << std::endl << "Create display from device FAILED" << std::endl;
+                continue;
+            }
+
+            std::clog << std::endl << "PBuffers as surface" << std::endl;
+            printResult("OpenGL 4   ", testPBufferOpenGL4(deviceDisplay));
+            printResult("OpenGL ES 2", testPBufferOpenGLES2(deviceDisplay));
+            printResult("OpenGL ES 3", testPBufferOpenGLES3(deviceDisplay));
+
+            std::clog << std::endl << "No surface" << std::endl;
+            printResult("OpenGL 4   ", testSurfacelessOpenGL4(deviceDisplay));
+            printResult("OpenGL ES 2", testSurfacelessOpenGLES2(deviceDisplay));
+            printResult("OpenGL ES 3", testSurfacelessOpenGLES3(deviceDisplay));
+        }
+    }
 
     eglTerminate(eglDpy);
 
