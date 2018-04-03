@@ -22,7 +22,7 @@
 using namespace egl;
 
 
-std::tuple<bool, std::string> testRendering()
+std::tuple<bool, std::string> testRendering(gl::GLenum readAttachment)
 {
     gl::glViewport(0, 0, 1, 1);
     gl::glClearColor(1.0f, 0.5f, 0.25f, 1.0f);
@@ -32,7 +32,7 @@ std::tuple<bool, std::string> testRendering()
 
     std::vector<gl::GLubyte> pixels(1 * 1 * 4 * sizeof(gl::GLubyte));
 
-    gl::glReadBuffer(gl::GL_COLOR_ATTACHMENT0);
+    gl::glReadBuffer(readAttachment);
 
     gl::glReadPixels(0, 0, 1, 1, gl::GL_RGBA, gl::GL_UNSIGNED_BYTE, pixels.data());
 
@@ -63,12 +63,12 @@ std::tuple<bool, std::string> testRendering()
 
 std::tuple<bool, std::string> testRenderingDefaultFBO()
 {
-    glbinding::setAfterCallback([](const glbinding::FunctionCall &)
+    /*glbinding::setAfterCallback([](const glbinding::FunctionCall &)
     {
         gl::GLenum error = gl::glGetError();
         if (error != gl::GL_NO_ERROR)
             std::cout << "error: " << error << std::endl;
-    });
+    });*/
 
     glbinding::initialize([](const char * name) {
         return eglGetProcAddress(name);
@@ -76,7 +76,7 @@ std::tuple<bool, std::string> testRenderingDefaultFBO()
 
     glbinding::setCallbackMaskExcept(glbinding::CallbackMask::After, { "glGetError" });
 
-    const auto result = testRendering();
+    const auto result = testRendering(gl::GL_FRONT);
 
     glbinding::releaseCurrentContext();
 
@@ -86,12 +86,12 @@ std::tuple<bool, std::string> testRenderingDefaultFBO()
 
 std::tuple<bool, std::string> testRenderingOwnFBO()
 {
-    glbinding::setAfterCallback([](const glbinding::FunctionCall &)
+    /*glbinding::setAfterCallback([](const glbinding::FunctionCall &)
     {
         gl::GLenum error = gl::glGetError();
         if (error != gl::GL_NO_ERROR)
             std::cout << "error: " << error << std::endl;
-    });
+    });*/
 
     glbinding::initialize([](const char * name) {
         return eglGetProcAddress(name);
@@ -113,7 +113,7 @@ std::tuple<bool, std::string> testRenderingOwnFBO()
 
     gl::glDrawBuffers(1, &gl::GL_COLOR_ATTACHMENT0);
 
-    const auto result = testRendering();
+    const auto result = testRendering(gl::GL_COLOR_ATTACHMENT0);
 
     gl::glDeleteRenderbuffers(1, &colorBuffer);
     gl::glDeleteFramebuffers(1, &fbo);
@@ -523,7 +523,7 @@ int main(int argc, char* argv[])
 {
     eglbinding::initialize(getProcAddress);
 
-    const auto eglDpy = eglGetDisplay(0); // EGL_DEFAULT_DISPLAY
+    const auto eglDpy = eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(EGL_DEFAULT_DISPLAY));
 
     if (eglDpy == nullptr)
     {
@@ -556,19 +556,28 @@ int main(int argc, char* argv[])
     std::clog << std::endl << "Test Native Display" << std::endl;
 
     std::clog << std::endl << "PBuffers as surface" << std::endl;
-    printResult("OpenGL 4   ", testPBufferOpenGL4(eglDpy, testRenderingOwnFBO));
-    printResult("OpenGL ES 2", testPBufferOpenGLES2(eglDpy, testRenderingOwnFBO));
-    printResult("OpenGL ES 3", testPBufferOpenGLES3(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL 4           ", testPBufferOpenGL4(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL ES 2        ", testPBufferOpenGLES2(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL ES 3        ", testPBufferOpenGLES3(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL 4    Def. FB", testPBufferOpenGL4(eglDpy, testRenderingDefaultFBO));
+    printResult("OpenGL ES 2 Def. FB", testPBufferOpenGLES2(eglDpy, testRenderingDefaultFBO));
+    printResult("OpenGL ES 3 Def. FB", testPBufferOpenGLES3(eglDpy, testRenderingDefaultFBO));
 
     std::clog << std::endl << "No surface" << std::endl;
-    printResult("OpenGL 4   ", testSurfacelessOpenGL4(eglDpy, testRenderingOwnFBO));
-    printResult("OpenGL ES 2", testSurfacelessOpenGLES2(eglDpy, testRenderingOwnFBO));
-    printResult("OpenGL ES 3", testSurfacelessOpenGLES3(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL 4           ", testSurfacelessOpenGL4(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL ES 2        ", testSurfacelessOpenGLES2(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL ES 3        ", testSurfacelessOpenGLES3(eglDpy, testRenderingOwnFBO));
+    //printResult("OpenGL 4    Def. FB", testSurfacelessOpenGL4(eglDpy, testRenderingDefaultFBO));
+    //printResult("OpenGL ES 2 Def. FB", testSurfacelessOpenGLES2(eglDpy, testRenderingDefaultFBO));
+    //printResult("OpenGL ES 3 Def. FB", testSurfacelessOpenGLES3(eglDpy, testRenderingDefaultFBO));
 
     std::clog << std::endl << "No config" << std::endl;
-    printResult("OpenGL 4   ", testConfiglessOpenGL4(eglDpy, testRenderingOwnFBO));
-    printResult("OpenGL ES 2", testConfiglessOpenGLES2(eglDpy, testRenderingOwnFBO));
-    printResult("OpenGL ES 3", testConfiglessOpenGLES3(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL 4           ", testConfiglessOpenGL4(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL ES 2        ", testConfiglessOpenGLES2(eglDpy, testRenderingOwnFBO));
+    printResult("OpenGL ES 3        ", testConfiglessOpenGLES3(eglDpy, testRenderingOwnFBO));
+    //printResult("OpenGL 4    Def. FB", testConfiglessOpenGL4(eglDpy, testRenderingDefaultFBO));
+    //printResult("OpenGL ES 2 Def. FB", testConfiglessOpenGLES2(eglDpy, testRenderingDefaultFBO));
+    //printResult("OpenGL ES 3 Def. FB", testConfiglessOpenGLES3(eglDpy, testRenderingDefaultFBO));
 
     eglTerminate(eglDpy);
 
@@ -588,26 +597,35 @@ int main(int argc, char* argv[])
 
             eglInitialize(deviceDisplay, nullptr, nullptr);
 
-            if (deviceDisplay == nullptr) // EGL_NO_DISPLAY
+            if (deviceDisplay == reinterpret_cast<EGLDisplay>(EGL_NO_DISPLAY))
             {
                 std::clog << std::endl << "Create display from device FAILED" << std::endl;
                 continue;
             }
 
             std::clog << std::endl << "PBuffers as surface" << std::endl;
-            printResult("OpenGL 4   ", testPBufferOpenGL4(deviceDisplay, testRenderingOwnFBO));
-            printResult("OpenGL ES 2", testPBufferOpenGLES2(deviceDisplay, testRenderingOwnFBO));
-            printResult("OpenGL ES 3", testPBufferOpenGLES3(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL 4           ", testPBufferOpenGL4(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL ES 2        ", testPBufferOpenGLES2(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL ES 3        ", testPBufferOpenGLES3(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL 4    Def. FB", testPBufferOpenGL4(deviceDisplay, testRenderingDefaultFBO));
+            printResult("OpenGL ES 2 Def. FB", testPBufferOpenGLES2(deviceDisplay, testRenderingDefaultFBO));
+            printResult("OpenGL ES 3 Def. FB", testPBufferOpenGLES3(deviceDisplay, testRenderingDefaultFBO));
 
             std::clog << std::endl << "No surface" << std::endl;
-            printResult("OpenGL 4   ", testSurfacelessOpenGL4(deviceDisplay, testRenderingOwnFBO));
-            printResult("OpenGL ES 2", testSurfacelessOpenGLES2(deviceDisplay, testRenderingOwnFBO));
-            printResult("OpenGL ES 3", testSurfacelessOpenGLES3(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL 4           ", testSurfacelessOpenGL4(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL ES 2        ", testSurfacelessOpenGLES2(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL ES 3        ", testSurfacelessOpenGLES3(deviceDisplay, testRenderingOwnFBO));
+            //printResult("OpenGL 4    Def. FB", testSurfacelessOpenGL4(deviceDisplay, testRenderingDefaultFBO));
+            //printResult("OpenGL ES 2 Def. FB", testSurfacelessOpenGLES2(deviceDisplay, testRenderingDefaultFBO));
+            //printResult("OpenGL ES 3 Def. FB", testSurfacelessOpenGLES3(deviceDisplay, testRenderingDefaultFBO));
 
             std::clog << std::endl << "No config" << std::endl;
-            printResult("OpenGL 4   ", testConfiglessOpenGL4(deviceDisplay, testRenderingOwnFBO));
-            printResult("OpenGL ES 2", testConfiglessOpenGLES2(deviceDisplay, testRenderingOwnFBO));
-            printResult("OpenGL ES 3", testConfiglessOpenGLES3(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL 4           ", testConfiglessOpenGL4(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL ES 2        ", testConfiglessOpenGLES2(deviceDisplay, testRenderingOwnFBO));
+            printResult("OpenGL ES 3        ", testConfiglessOpenGLES3(deviceDisplay, testRenderingOwnFBO));
+            //printResult("OpenGL 4    Def. FB", testConfiglessOpenGL4(deviceDisplay, testRenderingDefaultFBO));
+            //printResult("OpenGL ES 2 Def. FB", testConfiglessOpenGLES2(deviceDisplay, testRenderingDefaultFBO));
+            //printResult("OpenGL ES 3 Def. FB", testConfiglessOpenGLES3(deviceDisplay, testRenderingDefaultFBO));
 
             eglTerminate(deviceDisplay);
         }
