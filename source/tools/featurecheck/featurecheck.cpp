@@ -100,6 +100,11 @@ bool testPBufferOpenGL4(EGLDisplay eglDpy)
 
     eglChooseConfig(eglDpy, configAttribs, eglCfgs.data(), eglCfgs.size(), &numConfigs);
 
+    if (numConfigs == 0)
+    {
+        return false;
+    }
+
     EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfgs[0], pbufferAttribs);
 
     if (eglSurf == nullptr)
@@ -147,6 +152,11 @@ bool testPBufferOpenGLES3(EGLDisplay eglDpy)
 
     eglChooseConfig(eglDpy, configAttribs, eglCfgs.data(), eglCfgs.size(), &numConfigs);
 
+    if (numConfigs == 0)
+    {
+        return false;
+    }
+
     EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfgs[0], pbufferAttribs);
 
     if (eglSurf == nullptr)
@@ -193,6 +203,11 @@ bool testPBufferOpenGLES2(EGLDisplay eglDpy)
     std::array<EGLConfig, 128> eglCfgs;
 
     eglChooseConfig(eglDpy, configAttribs, eglCfgs.data(), eglCfgs.size(), &numConfigs);
+
+    if (numConfigs == 0)
+    {
+        return false;
+    }
 
     EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfgs[0], pbufferAttribs);
 
@@ -334,9 +349,11 @@ int main(int argc, char* argv[])
         {
             const auto & device = devices[i];
 
-            const auto deviceDisplay = eglGetPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, device, nullptr);
+            const auto deviceDisplay = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, device, nullptr);
 
             std::clog << std::endl << "Test GPU Display " << (i+1) << std::endl;
+
+            eglInitialize(deviceDisplay, nullptr, nullptr);
 
             if (deviceDisplay == nullptr) // EGL_NO_DISPLAY
             {
@@ -353,6 +370,8 @@ int main(int argc, char* argv[])
             printResult("OpenGL 4   ", testSurfacelessOpenGL4(deviceDisplay));
             printResult("OpenGL ES 2", testSurfacelessOpenGLES2(deviceDisplay));
             printResult("OpenGL ES 3", testSurfacelessOpenGLES3(deviceDisplay));
+
+            eglTerminate(deviceDisplay);
         }
     }
 
