@@ -22,21 +22,25 @@
 using namespace egl;
 
 
-std::tuple<bool, std::string> testRendering(gl::GLenum readAttachment)
+void render(gl::GLuint framebuffer, gl::GLenum drawAttachment)
 {
+    gl::glBindFramebuffer(gl::GL_FRAMEBUFFER, framebuffer);
+    gl::glDrawBuffers(1, &drawAttachment);
+
     gl::glViewport(0, 0, 1, 1);
     gl::glClearColor(1.0f, 0.5f, 0.25f, 1.0f);
     gl::glClear(gl::GL_COLOR_BUFFER_BIT);
+}
 
-    gl::glFinish();
 
+std::tuple<bool, std::string> testRendering(gl::GLuint framebuffer, gl::GLenum readAttachment)
+{
     std::vector<gl::GLubyte> pixels(1 * 1 * 4 * sizeof(gl::GLubyte));
 
+    gl::glBindFramebuffer(gl::GL_FRAMEBUFFER, framebuffer);
     gl::glReadBuffer(readAttachment);
 
     gl::glReadPixels(0, 0, 1, 1, gl::GL_RGBA, gl::GL_UNSIGNED_BYTE, pixels.data());
-
-    gl::glFinish();
 
     const auto pixelsMatch = pixels[0] == 0xFF && (pixels[1] == 0x7F || pixels[1] == 0x80) && pixels[2] == 0x40 && pixels[3] == 0xFF;
 
@@ -63,12 +67,12 @@ std::tuple<bool, std::string> testRendering(gl::GLenum readAttachment)
 
 std::tuple<bool, std::string> testRenderingDefaultFBO()
 {
-    /*glbinding::setAfterCallback([](const glbinding::FunctionCall &)
+    glbinding::setAfterCallback([](const glbinding::FunctionCall &)
     {
         gl::GLenum error = gl::glGetError();
         if (error != gl::GL_NO_ERROR)
             std::cout << "error: " << error << std::endl;
-    });*/
+    });
 
     glbinding::initialize([](const char * name) {
         return eglGetProcAddress(name);
@@ -76,7 +80,13 @@ std::tuple<bool, std::string> testRenderingDefaultFBO()
 
     glbinding::setCallbackMaskExcept(glbinding::CallbackMask::After, { "glGetError" });
 
-    const auto result = testRendering(gl::GL_FRONT);
+    gl::glFinish();
+    eglWaitClient();
+    eglWaitNative(static_cast<EGLint>(EGL_CORE_NATIVE_ENGINE));
+
+    render(0, gl::GL_BACK);
+
+    const auto result = testRendering(0, gl::GL_BACK);
 
     glbinding::releaseCurrentContext();
 
@@ -86,12 +96,12 @@ std::tuple<bool, std::string> testRenderingDefaultFBO()
 
 std::tuple<bool, std::string> testRenderingOwnFBO()
 {
-    /*glbinding::setAfterCallback([](const glbinding::FunctionCall &)
+    glbinding::setAfterCallback([](const glbinding::FunctionCall &)
     {
         gl::GLenum error = gl::glGetError();
         if (error != gl::GL_NO_ERROR)
             std::cout << "error: " << error << std::endl;
-    });*/
+    });
 
     glbinding::initialize([](const char * name) {
         return eglGetProcAddress(name);
@@ -111,9 +121,9 @@ std::tuple<bool, std::string> testRenderingOwnFBO()
     gl::glRenderbufferStorage(gl::GL_RENDERBUFFER, gl::GL_RGB8, 1, 1);
     gl::glFramebufferRenderbuffer(gl::GL_FRAMEBUFFER, gl::GL_COLOR_ATTACHMENT0, gl::GL_RENDERBUFFER, colorBuffer);
 
-    gl::glDrawBuffers(1, &gl::GL_COLOR_ATTACHMENT0);
+    render(fbo, gl::GL_COLOR_ATTACHMENT0);
 
-    const auto result = testRendering(gl::GL_COLOR_ATTACHMENT0);
+    const auto result = testRendering(fbo, gl::GL_COLOR_ATTACHMENT0);
 
     gl::glDeleteRenderbuffers(1, &colorBuffer);
     gl::glDeleteFramebuffers(1, &fbo);
@@ -155,26 +165,26 @@ std::tuple<bool, std::string> testPBufferOpenGL4(EGLDisplay eglDpy, std::tuple<b
 
     if (numConfigs == 0)
     {
-        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfgs[0], pbufferAttribs);
 
     if (eglSurf == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No surface created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No surface created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     auto openGLContext = eglCreateContext(eglDpy, eglCfgs[0], nullptr, ctxattr);
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, eglSurf, eglSurf, openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -215,26 +225,26 @@ std::tuple<bool, std::string> testPBufferOpenGLES3(EGLDisplay eglDpy, std::tuple
 
     if (numConfigs == 0)
     {
-        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfgs[0], pbufferAttribs);
 
     if (eglSurf == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No surface created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No surface created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     auto openGLContext = eglCreateContext(eglDpy, eglCfgs[0], nullptr, ctxattr);
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, eglSurf, eglSurf, openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -275,26 +285,26 @@ std::tuple<bool, std::string> testPBufferOpenGLES2(EGLDisplay eglDpy, std::tuple
 
     if (numConfigs == 0)
     {
-        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfgs[0], pbufferAttribs);
 
     if (eglSurf == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No surface created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No surface created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     auto openGLContext = eglCreateContext(eglDpy, eglCfgs[0], nullptr, ctxattr);
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, eglSurf, eglSurf, openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -321,7 +331,7 @@ std::tuple<bool, std::string> testSurfacelessOpenGL4(EGLDisplay eglDpy, std::tup
 
     if (numConfigs == 0)
     {
-        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     eglBindAPI(EGL_OPENGL_API);
@@ -330,12 +340,12 @@ std::tuple<bool, std::string> testSurfacelessOpenGL4(EGLDisplay eglDpy, std::tup
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -361,19 +371,19 @@ std::tuple<bool, std::string> testSurfacelessOpenGLES3(EGLDisplay eglDpy, std::t
 
     if (numConfigs == 0)
     {
-        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     auto openGLContext = eglCreateContext(eglDpy, eglCfgs[0], nullptr, ctxattr);
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -399,19 +409,19 @@ std::tuple<bool, std::string> testSurfacelessOpenGLES2(EGLDisplay eglDpy, std::t
 
     if (numConfigs == 0)
     {
-        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No configuration found: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     auto openGLContext = eglCreateContext(eglDpy, eglCfgs[0], nullptr, ctxattr);
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -435,12 +445,12 @@ std::tuple<bool, std::string> testConfiglessOpenGL4(EGLDisplay eglDpy, std::tupl
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -463,12 +473,12 @@ std::tuple<bool, std::string> testConfiglessOpenGLES3(EGLDisplay eglDpy, std::tu
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -491,12 +501,12 @@ std::tuple<bool, std::string> testConfiglessOpenGLES2(EGLDisplay eglDpy, std::tu
 
     if (openGLContext == nullptr)
     {
-        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "No context created: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     if (!eglMakeCurrent(eglDpy, reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), reinterpret_cast<egl::EGLSurface>(egl::EGL_NO_SURFACE), openGLContext))
     {
-        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(eglGetError()) };
+        return std::tuple<bool, std::string>{ false, "Context not current: " + eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) };
     }
 
     const auto result = callback();
@@ -511,12 +521,12 @@ void printResult(const std::string & testName, const std::tuple<bool, std::strin
     bool success = false;
     std::string info;
     std::tie(success, info) = result;
-    std::clog << testName << " - " << (success ? "SUCCEED" : "FAILED");
+    std::cout << testName << " - " << (success ? "SUCCEED" : "FAILED");
     if (info.size() > 0)
     {
-        std::clog << " (" << info << ")";
+        std::cout << " (" << info << ")";
     }
-    std::clog << std::endl;
+    std::cout << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -532,30 +542,30 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::clog << "Load display " << eglDpy << std::endl;
+        std::cout << "Load display " << eglDpy << std::endl;
     }
 
     EGLint vmajor, vminor;
 
     if (!eglInitialize(eglDpy, &vmajor, &vminor))
     {
-        std::cerr << "Could not initialize EGL: " << eglbinding::aux::Meta::getString(eglGetError()) << std::endl;
+        std::cerr << "Could not initialize EGL: " << eglbinding::aux::Meta::getString(static_cast<EGLenum>(eglGetError())) << std::endl;
         return -1;
     }
     else
     {
-        std::clog << "Initialize EGL " << vmajor << "." << vminor << std::endl;
+        std::cout << "Initialize EGL " << vmajor << "." << vminor << std::endl;
     }
 
     const auto apiString = eglQueryString(eglDpy, static_cast<EGLint>(EGL_CLIENT_APIS));
-    std::clog << "APIs: " << (strlen(apiString) > 0 ? apiString : "unspecified") << std::endl;
-    std::clog << "Extensions: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_EXTENSIONS)) << std::endl;
-    std::clog << "Vendor: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_VENDOR)) << std::endl;
-    std::clog << "Version: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_VERSION)) << std::endl;
+    std::cout << "APIs: " << (strlen(apiString) > 0 ? apiString : "unspecified") << std::endl;
+    std::cout << "Extensions: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_EXTENSIONS)) << std::endl;
+    std::cout << "Vendor: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_VENDOR)) << std::endl;
+    std::cout << "Version: " << eglQueryString(eglDpy, static_cast<EGLint>(EGL_VERSION)) << std::endl;
 
-    std::clog << std::endl << "Test Native Display" << std::endl;
+    std::cout << std::endl << "Test Native Display" << std::endl;
 
-    std::clog << std::endl << "PBuffers as surface" << std::endl;
+    std::cout << std::endl << "PBuffers as surface" << std::endl;
     printResult("OpenGL 4           ", testPBufferOpenGL4(eglDpy, testRenderingOwnFBO));
     printResult("OpenGL ES 2        ", testPBufferOpenGLES2(eglDpy, testRenderingOwnFBO));
     printResult("OpenGL ES 3        ", testPBufferOpenGLES3(eglDpy, testRenderingOwnFBO));
@@ -563,7 +573,7 @@ int main(int argc, char* argv[])
     printResult("OpenGL ES 2 Def. FB", testPBufferOpenGLES2(eglDpy, testRenderingDefaultFBO));
     printResult("OpenGL ES 3 Def. FB", testPBufferOpenGLES3(eglDpy, testRenderingDefaultFBO));
 
-    std::clog << std::endl << "No surface" << std::endl;
+    std::cout << std::endl << "No surface" << std::endl;
     printResult("OpenGL 4           ", testSurfacelessOpenGL4(eglDpy, testRenderingOwnFBO));
     printResult("OpenGL ES 2        ", testSurfacelessOpenGLES2(eglDpy, testRenderingOwnFBO));
     printResult("OpenGL ES 3        ", testSurfacelessOpenGLES3(eglDpy, testRenderingOwnFBO));
@@ -571,7 +581,7 @@ int main(int argc, char* argv[])
     //printResult("OpenGL ES 2 Def. FB", testSurfacelessOpenGLES2(eglDpy, testRenderingDefaultFBO));
     //printResult("OpenGL ES 3 Def. FB", testSurfacelessOpenGLES3(eglDpy, testRenderingDefaultFBO));
 
-    std::clog << std::endl << "No config" << std::endl;
+    std::cout << std::endl << "No config" << std::endl;
     printResult("OpenGL 4           ", testConfiglessOpenGL4(eglDpy, testRenderingOwnFBO));
     printResult("OpenGL ES 2        ", testConfiglessOpenGLES2(eglDpy, testRenderingOwnFBO));
     printResult("OpenGL ES 3        ", testConfiglessOpenGLES3(eglDpy, testRenderingOwnFBO));
@@ -593,17 +603,17 @@ int main(int argc, char* argv[])
 
             const auto deviceDisplay = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, device, nullptr);
 
-            std::clog << std::endl << "Test GPU Display " << (i+1) << std::endl;
+            std::cout << std::endl << "Test GPU Display " << (i+1) << std::endl;
 
             eglInitialize(deviceDisplay, nullptr, nullptr);
 
             if (deviceDisplay == reinterpret_cast<EGLDisplay>(EGL_NO_DISPLAY))
             {
-                std::clog << std::endl << "Create display from device FAILED" << std::endl;
+                std::cout << std::endl << "Create display from device FAILED" << std::endl;
                 continue;
             }
 
-            std::clog << std::endl << "PBuffers as surface" << std::endl;
+            std::cout << std::endl << "PBuffers as surface" << std::endl;
             printResult("OpenGL 4           ", testPBufferOpenGL4(deviceDisplay, testRenderingOwnFBO));
             printResult("OpenGL ES 2        ", testPBufferOpenGLES2(deviceDisplay, testRenderingOwnFBO));
             printResult("OpenGL ES 3        ", testPBufferOpenGLES3(deviceDisplay, testRenderingOwnFBO));
@@ -611,7 +621,7 @@ int main(int argc, char* argv[])
             printResult("OpenGL ES 2 Def. FB", testPBufferOpenGLES2(deviceDisplay, testRenderingDefaultFBO));
             printResult("OpenGL ES 3 Def. FB", testPBufferOpenGLES3(deviceDisplay, testRenderingDefaultFBO));
 
-            std::clog << std::endl << "No surface" << std::endl;
+            std::cout << std::endl << "No surface" << std::endl;
             printResult("OpenGL 4           ", testSurfacelessOpenGL4(deviceDisplay, testRenderingOwnFBO));
             printResult("OpenGL ES 2        ", testSurfacelessOpenGLES2(deviceDisplay, testRenderingOwnFBO));
             printResult("OpenGL ES 3        ", testSurfacelessOpenGLES3(deviceDisplay, testRenderingOwnFBO));
@@ -619,7 +629,7 @@ int main(int argc, char* argv[])
             //printResult("OpenGL ES 2 Def. FB", testSurfacelessOpenGLES2(deviceDisplay, testRenderingDefaultFBO));
             //printResult("OpenGL ES 3 Def. FB", testSurfacelessOpenGLES3(deviceDisplay, testRenderingDefaultFBO));
 
-            std::clog << std::endl << "No config" << std::endl;
+            std::cout << std::endl << "No config" << std::endl;
             printResult("OpenGL 4           ", testConfiglessOpenGL4(deviceDisplay, testRenderingOwnFBO));
             printResult("OpenGL ES 2        ", testConfiglessOpenGLES2(deviceDisplay, testRenderingOwnFBO));
             printResult("OpenGL ES 3        ", testConfiglessOpenGLES3(deviceDisplay, testRenderingOwnFBO));
