@@ -67,7 +67,7 @@ bool testRendering()
 
     glbinding::releaseCurrentContext();
 
-    return pixels[0] == 0xFF && pixels[1] == 0x7F && pixels[2] == 0x40 && pixels[3] == 0xFF;
+    return pixels[0] == 0xFF && (pixels[1] == 0x7F || pixels[1] == 0x80) && pixels[2] == 0x40 && pixels[3] == 0xFF;
 }
 
 bool testPBufferOpenGL4()
