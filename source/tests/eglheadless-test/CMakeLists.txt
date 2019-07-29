@@ -5,8 +5,9 @@
 
 find_package(${META_PROJECT_NAME} REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../../")
 
+find_package(KHR REQUIRED)
 find_package(glbinding REQUIRED)
-find_package(GLESv2 REQUIRED)
+find_package(glesbinding REQUIRED)
 
 # 
 # Executable name and options
@@ -72,7 +73,8 @@ target_link_libraries(${target}
     ${META_PROJECT_NAME}::eglheadless
     glbinding::glbinding
     glbinding::glbinding-aux
-    GLESv2::GLESv2
+    glesbinding::glesbinding
+    glesbinding::glesbinding-aux
     gmock-dev
 )
 

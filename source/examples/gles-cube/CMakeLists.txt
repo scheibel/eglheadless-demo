@@ -3,7 +3,7 @@
 # External dependencies
 # 
 
-find_package(GLESv2 REQUIRED)
+find_package(glesbinding REQUIRED)
 find_package(glm REQUIRED)
 
 
@@ -70,7 +70,7 @@ target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
     ${META_PROJECT_NAME}::eglheadless
-    GLESv2::GLESv2
+    glesbinding::glesbinding
     glm
 )
 
