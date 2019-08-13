@@ -3,7 +3,9 @@
 # External dependencies
 # 
 
+find_package(KHR REQUIRED)
 find_package(EGL REQUIRED)
+find_package(eglbinding REQUIRED)
 
 
 # 
@@ -140,7 +142,7 @@ target_link_libraries(${target}
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
-    EGL::EGL
+    eglbinding::eglbinding
 
     INTERFACE
 )

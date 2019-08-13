@@ -6,6 +6,8 @@
 find_package(${META_PROJECT_NAME} REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../../")
 
 find_package(KHR REQUIRED)
+find_package(EGL REQUIRED)
+find_package(eglbinding REQUIRED)
 find_package(glbinding REQUIRED)
 find_package(glesbinding REQUIRED)
 

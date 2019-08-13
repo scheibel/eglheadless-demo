@@ -3,6 +3,9 @@
 # External dependencies
 # 
 
+find_package(KHR REQUIRED)
+find_package(EGL REQUIRED)
+find_package(eglbinding REQUIRED)
 find_package(glesbinding REQUIRED)
 find_package(glm REQUIRED)
 

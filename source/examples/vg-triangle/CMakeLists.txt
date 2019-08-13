@@ -3,7 +3,10 @@
 # External dependencies
 # 
 
-# find_package(THIRDPARTY REQUIRED)
+find_package(KHR REQUIRED)
+find_package(EGL REQUIRED)
+find_package(eglbinding REQUIRED)
+
 
 
 # 

@@ -151,7 +151,7 @@ TEST_F(eglheadless_test, NativeCheck)
     gl::glDrawBuffers(1, &gl::GL_COLOR_ATTACHMENT0);
 
     gl::glViewport(0, 0, 1920, 1080);
-    gl::glClearColor(1.0f, 0.5f, 0.25f, 1.0f);
+    gl::glClearColor(1.0f, 0.5f, 1.0f, 1.0f);
     gl::glClear(gl::GL_COLOR_BUFFER_BIT);
 
     gl::glFinish();

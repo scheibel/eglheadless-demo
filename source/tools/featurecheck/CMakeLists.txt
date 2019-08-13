@@ -4,6 +4,7 @@
 # 
 
 find_package(EGL REQUIRED)
+find_package(KHR REQUIRED)
 find_package(eglbinding REQUIRED)
 find_package(glbinding REQUIRED)
 
@@ -69,7 +70,6 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
-    EGL::EGL
     eglbinding::eglbinding
     eglbinding::eglbinding-aux
     glbinding::glbinding
