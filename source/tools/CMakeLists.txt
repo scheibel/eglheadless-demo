@@ -6,3 +6,4 @@ endif()
 
 # Example applications
 add_subdirectory(featurecheck)
+add_subdirectory(renderingcheck)

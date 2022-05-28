@@ -3,21 +3,18 @@
 # External dependencies
 # 
 
-find_package(${META_PROJECT_NAME} REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../../")
-
-find_package(KHR REQUIRED)
 find_package(EGL REQUIRED)
+find_package(KHR REQUIRED)
 find_package(eglbinding REQUIRED)
 find_package(glbinding REQUIRED)
-find_package(glesbinding REQUIRED)
 
 # 
 # Executable name and options
 # 
 
 # Target name
-set(target eglheadless-test)
-message(STATUS "Test ${target}")
+set(target renderingcheck)
+message(STATUS "Tool ${target}")
 
 
 # 
@@ -25,8 +22,9 @@ message(STATUS "Test ${target}")
 # 
 
 set(sources
+    getProcAddress.cpp
+    getProcAddress.h
     main.cpp
-    eglheadless_test.cpp
 )
 
 
@@ -72,12 +70,10 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
-    ${META_PROJECT_NAME}::eglheadless
+    eglbinding::eglbinding
+    eglbinding::eglbinding-aux
     glbinding::glbinding
     glbinding::glbinding-aux
-    glesbinding::glesbinding
-    glesbinding::glesbinding-aux
-    googletest::googletest
 )
 
 
@@ -108,4 +104,25 @@ target_compile_options(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LINKER_OPTIONS}
+)
+
+
+#
+# Target Health
+#
+
+perform_health_checks(
+    ${target}
+    ${sources}
+)
+
+
+# 
+# Deployment
+# 
+
+# Executable
+install(TARGETS ${target}
+    RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT tools
+    BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT tools
 )

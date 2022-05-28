@@ -533,6 +533,15 @@ int main(int argc, char* argv[])
 {
     eglbinding::initialize(getProcAddress);
 
+    static const EGLint configAttribs[] = {
+        static_cast<EGLint>(EGL_SURFACE_TYPE), static_cast<EGLint>(EGL_PBUFFER_BIT),
+        static_cast<EGLint>(EGL_BLUE_SIZE), 8,
+        static_cast<EGLint>(EGL_GREEN_SIZE), 8,
+        static_cast<EGLint>(EGL_RED_SIZE), 8,
+        static_cast<EGLint>(EGL_RENDERABLE_TYPE), static_cast<EGLint>(EGL_OPENGL_BIT | EGL_OPENGL_ES3_BIT | EGL_OPENGL_ES2_BIT),
+        static_cast<EGLint>(EGL_NONE)
+    };
+
     const auto eglDpy = eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(EGL_DEFAULT_DISPLAY));
 
     if (eglDpy == nullptr)
